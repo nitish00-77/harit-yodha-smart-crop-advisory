@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>हरित - फसल लागत कैलकुलेटर</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Teko:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .custom-heading {
+            font-family: 'Teko', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-green-50/50">
+
+    <div class="container mx-auto p-4 sm:p-6 md:p-8 min-h-screen flex items-center justify-center">
+        <div class="w-full max-w-2xl bg-white rounded-2xl shadow-lg p-6 sm:p-8 border border-green-200">
+
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-4xl sm:text-5xl font-bold text-green-800 custom-heading tracking-wide">हरित - आपका कृषि सहायक</h1>
+                <p class="text-lg text-gray-600 mt-2">फसल की कुल लागत और बिक्री का अनुमान लगाएं</p>
+            </div>
+
+            <!-- Calculator Form -->
+            <div class="space-y-6">
+                <div>
+                    <label for="crop-select" class="block text-lg font-medium text-gray-700 mb-2">फसल चुनें:</label>
+                    <select id="crop-select" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg text-lg text-gray-800 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-150 ease-in-out">
+                        <option value="">-- एक फसल का चयन करें --</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="acre-input" class="block text-lg font-medium text-gray-700 mb-2">एकड़ में क्षेत्र दर्ज करें:</label>
+                    <input type="number" id="acre-input" min="0" placeholder="उदा. 5" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg text-lg text-gray-800 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-150 ease-in-out">
+                </div>
+
+                <div>
+                    <button id="calculate-btn" class="w-full bg-green-600 text-white text-xl font-bold py-3 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-300 transition-transform transform hover:scale-105 duration-200 ease-in-out shadow-md">
+                        गणना करें
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="results-container" class="mt-8 pt-6 border-t border-dashed border-gray-300 hidden">
+                 <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 text-center mb-6 custom-heading">अनुमानित लागत और बिक्री</h2>
+                 <div id="results-content" class="bg-green-50 p-6 rounded-xl space-y-4 shadow-inner">
+                    <!-- Dynamic content will be injected here -->
+                 </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const cost_data = {
+            "गेहूँ": { cost: "5080, बीज की लागत = 1800, कुल लागत = 6880 प्रति एकड़।", sale: 25000 },
+            "धान": { cost: "4420, बीज की लागत = 2500, कुल लागत = 6920 प्रति एकड़।", sale: 30000 },
+            "मक्का": { cost: "4050, बीज की लागत = 1500, कुल लागत = 5550 प्रति एकड़।", sale: 22000 },
+            "चना": { cost: "3920, बीज की लागत = 1400, कुल लागत = 5320 प्रति एकड़।", sale: 35000 },
+            "सोयाबीन": { cost: "3160, बीज की लागत = 1250, कुल लागत = 4410 प्रति एकड़।", sale: 40000 },
+            "कपास": { cost: "3760, बीज की लागत = 2200, कुल लागत = 5960 प्रति एकड़।", sale: 55000 },
+            "सरसों": { cost: "2860, बीज की लागत = 1250, कुल लागत = 4110 प्रति एकड़।", sale: 38000 },
+            "जौ": { cost: "1320, बीज की लागत = 1400, कुल लागत = 2720 प्रति एकड़।", sale: 18000 },
+            "मसूर": { cost: "2440, बीज की लागत = 1150, कुल लागत = 3590 प्रति एकड़।", sale: 42000 },
+            "मटर": { cost: "2100, बीज की लागत = 1300, कुल लागत = 3400 प्रति एकड़।", sale: 28000 },
+            "गन्ना": { cost: "10410, बीज की लागत = 3000, कुल लागत = 13410 प्रति एकड़।", sale: 65000 },
+            "अरहर": { cost: "2320, बीज की लागत = 1850, कुल लागत = 4170 प्रति एकड़।", sale: 50000 },
+            "मूंगफली": { cost: "3920, बीज की लागत = 1250, कुल लागत = 5170 प्रति एकड़।", sale: 45000 },
+            "उड़द": { cost: "1440, बीज की लागत = 1350, कुल लागत = 2790 प्रति एकड़।", sale: 48000 },
+            "तिल": { cost: "1200, बीज की लागत = 1000, कुल लागत = 2200 प्रति एकड़।", sale: 55000 },
+            "ज्वार": { cost: "1320, बीज की लागत = 1050, कुल लागत = 2370 प्रति एकड़।", sale: 20000 },
+            "बाजरा": { cost: "360, बीज की लागत = 1050, कुल लागत = 1410 प्रति एकड़।", sale: 15000 },
+            "टमाटर": { cost: "4060, बीज की लागत = 1850, कुल लागत = 5910 प्रति एकड़।", sale: 70000 },
+            "बैंगन": { cost: "3580, बीज की लागत = 1600, कुल लागत = 5180 प्रति एकड़।", sale: 60000 },
+            "आलू": { cost: "6020, बीज की लागत = 2500, कुल लागत = 8520 प्रति एकड़।", sale: 75000 },
+            "प्याज़": { cost: "3760, बीज की लागत = 1850, कुल लागत = 5610 प्रति एकड़।", sale: 65000 },
+            "गाजर": { cost: "3040, बीज की लागत = 1350, कुल लागत = 4390 प्रति एकड़।", sale: 40000 },
+            "मूली": { cost: "1920, बीज की लागत = 1000, कुल लागत = 2920 प्रति एकड़।", sale: 25000 },
+            "पालक": { cost: "180, बीज की लागत = 1200, कुल लागत = 1380 प्रति एकड़।", sale: 18000 },
+            "मेथी": { cost: "960, बीज की लागत = 1150, कुल लागत = 2110 प्रति एकड़।", sale: 22000 },
+            "फूलगोभी": { cost: "3400, बीज की लागत = 1850, कुल लागत = 5250 प्रति एकड़।", sale: 55000 },
+            "पत्तागोभी": { cost: "3400, बीज की लागत = 1850, कुल लागत = 5250 प्रति एकड़।", sale: 50000 },
+            "खीरा": { cost: "1710, बीज की लागत = 1400, कुल लागत = 3110 प्रति एकड़।", sale: 30000 },
+            "तरबूज": { cost: "1710, बीज की लागत = 1400, कुल लागत = 3110 प्रति एकड़।", sale: 35000 },
+            "खरबूजा": { cost: "1710, बीज की लागत = 1400, कुल लागत = 3110 प्रति एकड़।", sale: 32000 },
+            "पपीता": { cost: "15, बीज की लागत = 2000, कुल लागत = 2015 प्रति एकड़।", sale: 80000 },
+            "आम": { cost: "90, बीज की लागत = 1850, कुल लागत = 1940 प्रति एकड़।", sale: 120000 },
+            "अमरूद": { cost: "24, बीज की लागत = 1850, कुल लागत = 1874 प्रति एकड़।", sale: 100000 },
+            "अंगूर": { cost: "5280, बीज की लागत = 2250, कुल लागत = 7530 प्रति एकड़।", sale: 150000 },
+            "केला": { cost: "11750, बीज की लागत = 3000, कुल लागत = 14750 प्रति एकड़।", sale: 180000 },
+            "चाय": { cost: "2460, बीज की लागत = 1850, कुल लागत = 4310 प्रति एकड़।", sale: 200000 },
+            "कॉफी": { cost: "2370, बीज की लागत = 1850, कुल लागत = 4220 प्रति एकड़।", sale: 250000 },
+            "काजू": { cost: "1920, बीज की लागत = 3000, कुल लागत = 4920 प्रति एकड़।", sale: 180000 },
+            "नारियल": { cost: "53, बीज की लागत = 2250, कुल लागत = 2303 प्रति एकड़।", sale: 90000 },
+            "अलसी": { cost: "1230, बीज की लागत = 1200, कुल लागत = 2430 प्रति एकड़।", sale: 28000 },
+            "जीरा": { cost: "960, बीज की लागत = 1200, कुल लागत = 2160 प्रति एकड़।", sale: 35000 },
+            "लौकी": { cost: "1710, बीज की लागत = 1400, कुल लागत = 3110 प्रति एकड़।", sale: 28000 },
+            "करेला": { cost: "1710, बीज की लागत = 1400, कुल लागत = 3110 प्रति एकड़।", sale: 25000 },
+            "मिर्च": { cost: "4060, बीज की लागत = 1850, कुल लागत = 5910 प्रति एकड़।", sale: 60000 }
+        };
+
+        const cropSelect = document.getElementById('crop-select');
+        const acreInput = document.getElementById('acre-input');
+        const calculateBtn = document.getElementById('calculate-btn');
+        const resultsContainer = document.getElementById('results-container');
+        const resultsContent = document.getElementById('results-content');
+        
+        // Function to format numbers to Indian currency style
+        const formatCurrency = (num) => {
+            return new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(num);
+        };
+
+        // Populate dropdown with crops
+        window.addEventListener('DOMContentLoaded', () => {
+            const crops = Object.keys(cost_data);
+            crops.forEach(crop => {
+                const option = document.createElement('option');
+                option.value = crop;
+                option.textContent = crop;
+                cropSelect.appendChild(option);
+            });
+        });
+        
+        // Function to parse cost string and extract numbers
+        function parseCosts(costString) {
+            // Extracts the first number, which represents all costs except seeds.
+            const cultivationCostMatch = costString.match(/^([\d,]+)/);
+            // Extracts the seed cost.
+            const seedMatch = costString.match(/बीज की लागत = ([\d,]+)/);
+            // Extracts the total cost per acre.
+            const totalMatch = costString.match(/कुल लागत = ([\d,]+)/);
+            
+            const parseNumber = (str) => str ? parseInt(str.replace(/,/g, ''), 10) : 0;
+
+            return {
+                // We'll use the initial number as the fertilizer/other costs.
+                fertilizerCost: parseNumber(cultivationCostMatch ? cultivationCostMatch[1] : '0'),
+                seedCost: parseNumber(seedMatch ? seedMatch[1] : '0'),
+                totalCostPerAcre: parseNumber(totalMatch ? totalMatch[1] : '0')
+            };
+        }
+
+        // Calculation logic
+        calculateBtn.addEventListener('click', () => {
+            const selectedCrop = cropSelect.value;
+            const acres = parseFloat(acreInput.value);
+
+            if (!selectedCrop) {
+                resultsContent.innerHTML = `<p class="text-red-500 font-medium text-center">कृपया एक फसल चुनें।</p>`;
+                resultsContainer.classList.remove('hidden');
+                return;
+            }
+
+            if (isNaN(acres) || acres <= 0) {
+                resultsContent.innerHTML = `<p class="text-red-500 font-medium text-center">कृपया एक मान्य क्षेत्र (एकड़ में) दर्ज करें।</p>`;
+                resultsContainer.classList.remove('hidden');
+                return;
+            }
+
+            const cropInfo = cost_data[selectedCrop];
+            const costs = parseCosts(cropInfo.cost);
+
+            const totalFertilizerCost = costs.fertilizerCost * acres;
+            const totalSeedCost = costs.seedCost * acres;
+            const totalCultivationCost = costs.totalCostPerAcre * acres;
+            const totalSaleValue = cropInfo.sale * acres;
+            const totalProfit = totalSaleValue - totalCultivationCost;
+
+            resultsContent.innerHTML = `
+                <div class="flex justify-between items-center text-lg">
+                    <span class="font-medium text-gray-600">चयनित फसल:</span>
+                    <span class="font-bold text-green-800">${selectedCrop}</span>
+                </div>
+                <div class="flex justify-between items-center text-lg">
+                    <span class="font-medium text-gray-600">कुल क्षेत्र:</span>
+                    <span class="font-bold text-green-800">${acres} एकड़</span>
+                </div>
+                 <hr class="my-3 border-gray-300">
+                <div class="flex justify-between items-center text-lg">
+                    <span class="font-medium text-gray-600">कुल खाद लागत:</span>
+                    <span class="font-semibold text-gray-800">${formatCurrency(totalFertilizerCost)}</span>
+                </div>
+                <div class="flex justify-between items-center text-lg">
+                    <span class="font-medium text-gray-600">कुल बीज लागत:</span>
+                    <span class="font-semibold text-gray-800">${formatCurrency(totalSeedCost)}</span>
+                </div>
+                <div class="bg-green-200 p-4 rounded-lg mt-4 text-center">
+                    <p class="text-xl font-bold text-green-900">कुल अनुमानित लागत</p>
+                    <p class="text-3xl font-extrabold text-green-900">${formatCurrency(totalCultivationCost)}</p>
+                </div>
+                <div class="bg-blue-200 p-4 rounded-lg mt-4 text-center">
+                    <p class="text-xl font-bold text-blue-900">संभावित बिक्री मूल्य</p>
+                    <p class="text-3xl font-extrabold text-blue-900">${formatCurrency(totalSaleValue)}</p>
+                </div>
+                <div class="bg-yellow-200 p-4 rounded-lg mt-4 text-center">
+                    <p class="text-xl font-bold text-yellow-900">अनुमानित लाभ</p>
+                    <p class="text-3xl font-extrabold text-yellow-900">${formatCurrency(totalProfit)}</p>
+                </div>
+            `;
+            
+            resultsContainer.classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>
